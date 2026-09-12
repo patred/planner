@@ -32,19 +32,19 @@ jobs:
       - name: Prepare jpackage input directory
         run: |
           mkdir jpackage-input
-          copy target\*.jar jpackage-input\app.jar
+          copy target\*.jar jpackage-input\shift-manager.jar
 
       # 5. Genera l'installer Windows .exe tramite jpackage
       - name: Generate Windows .exe installer with jpackage
         run: |
           jpackage `
             --type exe `
-            --name "GestioneTurni" `
+            --name "ShiftManager" `
             --app-version "1.0.0" `
             --description "Applicazione desktop per la pianificazione automatica dei turni" `
             --vendor "PatRed Planner" `
             --input jpackage-input `
-            --main-jar app.jar `
+            --main-jar shift-manager.jar `
             --dest dist `
             --win-shortcut `
             --win-menu `
@@ -54,5 +54,5 @@ jobs:
       - name: Upload Installer Executable
         uses: actions/upload-artifact@v4
         with:
-          name: GestioneTurni-Windows-Installer
+          name: ShiftManager-Windows-Installer
           path: dist/*.exe
