@@ -1,14 +1,19 @@
-/.idea/
-/data/
+# Cartelle di build Maven
+target/
 
-# Default ignored files
-/shelf/
-/workspace.xml
-# Editor-based HTTP Client requests
-/httpRequests/
-# Ignored default folder with query files
-/queries/
-# Datasource local storage ignored files
-/dataSources/
-/dataSources.local.xml
+# IDE ed Editor
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
 
+# Database locale H2 e log
+*.db
+*.log
+.h2.server.properties
+
+# Cartelle temporanee di packaging
+jpackage-input/
+dist/
