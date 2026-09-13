@@ -1,0 +1,103 @@
+/* ==========================================================================
+   STILI SPECIFICI PER INDEX.HTML (DASHBOARD & CALENDARIO TURNI)
+   ========================================================================== */
+
+/* Badges di Stato del Solver */
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.status-idle {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+.status-solving {
+    background-color: #fef08a;
+    color: #854d0e;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Pannello di Controllo Algoritmo */
+.control-panel h3 {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-panel .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.control-panel .form-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Griglia e Contenitore Calendario */
+.calendar-container {
+    margin-top: 15px;
+    overflow-x: auto;
+    min-height: 200px;
+}
+
+.placeholder-text {
+    color: #94a3b8;
+    font-style: italic;
+    text-align: center;
+    padding: 40px 0;
+}
+
+/* Tabella Calendario */
+.calendar-container table.data-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+}
+
+.calendar-container table.data-table td {
+    vertical-align: middle;
+}
+
+/* Badge Assegnazione Dipendente */
+.assigned-emp {
+    background-color: #dcfce7;
+    color: #15803d;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.unassigned-emp {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: inline-block;
+}

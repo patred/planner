@@ -15,7 +15,8 @@ public class RosterConstraintProvider implements ConstraintProvider {
         return new Constraint[]{
                 noOverlappingShifts(factory),
                 atLeast11HoursRestBetweenShifts(factory),
-                fairnessPerEmployee(factory)
+                fairnessPerEmployee(factory),
+                requiredRoleForShift(factory)
         };
     }
 
@@ -23,7 +24,7 @@ public class RosterConstraintProvider implements ConstraintProvider {
     private Constraint noOverlappingShifts(ConstraintFactory factory) {
         return factory.forEachUniquePair(Shift.class,
                         Joiners.equal(Shift::getEmployee),
-                        Joiners.overlapping(Shift::getStart, Shift::getEnd))
+                        Joiners.overlapping(Shift::getStartDateTime, Shift::getEndDateTime))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Turni sovrapposti");
     }
@@ -34,10 +35,10 @@ public class RosterConstraintProvider implements ConstraintProvider {
                         Joiners.equal(Shift::getEmployee))
                 .filter((shift1, shift2) -> {
                     Duration rest;
-                    if (shift1.getEnd().isBefore(shift2.getStart())) {
-                        rest = Duration.between(shift1.getEnd(), shift2.getStart());
+                    if (shift1.getEndDateTime().isBefore(shift2.getStartDateTime())) {
+                        rest = Duration.between(shift1.getEndDateTime(), shift2.getStartDateTime());
                     } else {
-                        rest = Duration.between(shift2.getEnd(), shift1.getStart());
+                        rest = Duration.between(shift2.getEndDateTime(), shift1.getStartDateTime());
                     }
                     return rest.toHours() < 11;
                 })
@@ -52,5 +53,15 @@ public class RosterConstraintProvider implements ConstraintProvider {
                 .groupBy(Shift::getEmployee, ConstraintCollectors.count())
                 .penalize(HardSoftScore.ONE_SOFT, (employee, count) -> count * count)
                 .asConstraint("Distribuzione equa dei turni");
+    }
+
+    private Constraint requiredRoleForShift(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Shift.class)
+                // Considera solo i turni a cui è già stato assegnato un dipendente
+                .filter(shift -> shift.getEmployee() != null
+                        // Penalizza se il ruolo del dipendente NON coincide con il ruolo richiesto
+                        && !shift.getEmployee().getRole().equals(shift.getRequiredRole()))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Role mismatch for shift");
     }
 }

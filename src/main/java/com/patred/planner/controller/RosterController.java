@@ -1,55 +1,76 @@
 package com.patred.planner.controller;
 
-import ai.timefold.solver.core.api.solver.SolverManager;
-import com.patred.planner.domain.Employee;
-import com.patred.planner.domain.Roster;
-import com.patred.planner.domain.Shift;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.patred.planner.service.RosterService;
+import com.patred.planner.service.ShiftGeneratorService;
+import com.patred.planner.solver.Roster;
+import ai.timefold.solver.core.api.solver.SolverStatus;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/roster")
 public class RosterController {
 
-    @Autowired
-    private SolverManager<Roster, UUID> solverManager;
+    private final RosterService rosterService;
+    private final ShiftGeneratorService shiftGeneratorService;
 
+    public RosterController(RosterService rosterService, ShiftGeneratorService shiftGeneratorService) {
+        this.rosterService = rosterService;
+        this.shiftGeneratorService = shiftGeneratorService;
+    }
+
+    /**
+     * 1. Genera nel DB le istanze dei turni (Shift) partendo dai modelli (ShiftTemplate)
+     *    per il periodo specificato.
+     */
     @PostMapping("/generate")
-    public Roster generateRoster() throws ExecutionException, InterruptedException {
-        UUID problemId = UUID.randomUUID();
+    public ResponseEntity<String> generateShifts(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        // 1. Dati di test (in produzione verranno dal DB H2)
-        List<Employee> employees = List.of(
-                new Employee("1", "Mario Rossi"),
-                new Employee("2", "Luigi Verdi"),
-                new Employee("3", "Giulia Verdi")
-        );
+        shiftGeneratorService.generateShiftsForPeriod(startDate, endDate);
+        return ResponseEntity.ok("Turni generati con successo per il periodo " + startDate + " - " + endDate);
+    }
 
-        List<Shift> shifts = List.of(
-                // Lunedì 16 Marzo 2026
-                new Shift("S1", LocalDateTime.of(2026, 3, 16, 6, 0), LocalDateTime.of(2026, 3, 16, 14, 0)),
-                new Shift("S2", LocalDateTime.of(2026, 3, 16, 14, 0), LocalDateTime.of(2026, 3, 16, 22, 0)),
+    /**
+     * 2. Avvia l'ottimizzazione asincrona con Timefold per un determinato tenant/periodo.
+     */
+    @PostMapping("/solve/{rosterId}")
+    public ResponseEntity<String> solveRoster(@PathVariable Long rosterId) {
+        rosterService.solve(rosterId);
+        return ResponseEntity.ok("Ottimizzazione avviata per il roster ID: " + rosterId);
+    }
 
-                // Martedì 17 Marzo 2026
-                new Shift("S3", LocalDateTime.of(2026, 3, 17, 6, 0), LocalDateTime.of(2026, 3, 17, 14, 0)),
-                new Shift("S4",LocalDateTime.of(2026, 3, 17, 14, 0), LocalDateTime.of(2026, 3, 17, 22, 0)),
+    /**
+     * 3. Interrompe la risoluzione in corso (opzionale).
+     */
+    @PostMapping("/stop/{rosterId}")
+    public ResponseEntity<String> stopSolving(@PathVariable Long rosterId) {
+        rosterService.stopSolving(rosterId);
+        return ResponseEntity.ok("Richiesta di arresto inviata per il roster ID: " + rosterId);
+    }
 
-                // Mercoledì 18 Marzo 2026
-                new Shift("S5", LocalDateTime.of(2026, 3, 18, 6, 0), LocalDateTime.of(2026, 3, 18, 14, 0))
-        );
+    /**
+     * 4. Recupera lo stato attuale del Roster (soluzione con turni assegnati + score).
+     */
+    @GetMapping("/{rosterId}")
+    public ResponseEntity<Roster> getRoster(@PathVariable Long rosterId) {
+        Roster roster = rosterService.getRoster(rosterId);
+        if (roster == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(roster);
+    }
 
-        Roster problem = new Roster(employees, shifts);
-
-        // 2. Avvia il Solver
-        Roster solution = solverManager.solve(problemId, problem).getFinalBestSolution();
-
-        return solution; // Restituisce il JSON con i turni assegnati!
+    /**
+     * 5. Verifica lo stato del Solver (SOLVING_ACTIVE, NOT_SOLVING, ecc.).
+     */
+    @GetMapping("/{rosterId}/status")
+    public ResponseEntity<SolverStatus> getSolverStatus(@PathVariable Long rosterId) {
+        SolverStatus status = rosterService.getSolverStatus(rosterId);
+        return ResponseEntity.ok(status);
     }
 }

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Dipendenti - Roster Planner</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/employees.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-calendar-check"></i>
+            <h2>Roster Planner</h2>
+        </div>
+        <nav class="nav-menu">
+            <a href="index.html" class="nav-item">
+                <i class="fa-solid fa-house"></i> Dashboard & Turni
+            </a>
+            <a href="shiftTemplates.html" class="nav-item">
+                <i class="fa-solid fa-clock"></i> Template Turni
+            </a>
+            <a href="employees.html" class="nav-item active">
+                <i class="fa-solid fa-users"></i> Gestione Dipendenti
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Gestione Dipendenti</h1>
+            <button class="btn btn-primary" onclick="openModal()">
+                <i class="fa-solid fa-user-plus"></i> Nuovo Dipendente
+            </button>
+        </header>
+
+        <div class="card">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Cognome</th>
+                    <th>Email</th>
+                    <th>Ruolo</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody id="employees-table-body">
+                <!-- Popolato via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Form Dipendente -->
+<div id="employee-modal" class="modal">
+    <div class="modal-content card">
+        <div class="modal-header">
+            <h2 id="modal-title">Nuovo Dipendente</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="employee-form" onsubmit="saveEmployee(event)">
+            <input type="hidden" id="emp-id">
+
+            <div class="form-group">
+                <label for="emp-name">Nome:</label>
+                <input type="text" id="emp-name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="emp-surname">Cognome:</label>
+                <input type="text" id="emp-surname" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="emp-email">Email:</label>
+                <input type="email" id="emp-email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="emp-role">Ruolo:</label>
+                <select id="emp-role" class="form-control" required>
+                    <option value="">Caricamento ruoli...</option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+                <button type="submit" class="btn btn-primary">Salva</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/employees.js"></script>
+</body>
+</html>

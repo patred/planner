@@ -1,0 +1,36 @@
+.form-row-2 {
+    display: flex;
+    gap: 16px;
+}
+.form-row-2 .form-group {
+    flex: 1;
+}
+
+.requirements-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.requirements-section h4 {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    color: #475569;
+}
+
+.role-req-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.req-badge {
+    display: inline-block;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-right: 4px;
+}
