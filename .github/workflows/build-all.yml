@@ -9,7 +9,7 @@ on:
 
 jobs:
   # ========================================================
-  # 1. BUILD WINDOWS (Installer .exe + Portable .zip)
+  # 1. BUILD WINDOWS (Portable .zip + Installer .exe)
   # ========================================================
   build-windows:
     name: Build Windows Packages
@@ -34,7 +34,7 @@ jobs:
           mkdir jpackage-input
           copy target\*.jar jpackage-input\shift-manager.jar
 
-      # --- A. Generazione PORTABLE (.zip) ---
+      # --- Windows PORTABLE ---
       - name: Generate Portable Windows App (app-image)
         run: |
           jpackage `
@@ -50,7 +50,7 @@ jobs:
       - name: Compress Portable App
         run: Compress-Archive -Path "dist-portable\ShiftManager\*" -DestinationPath "dist-portable\ShiftManager-Windows-Portable.zip"
 
-      # --- B. Generazione INSTALLER (.exe) ---
+      # --- Windows INSTALLER ---
       - name: Generate Windows .exe installer
         run: |
           jpackage `
@@ -66,7 +66,6 @@ jobs:
             --win-menu `
             --win-dir-chooser
 
-      # --- Upload Artifacts Windows ---
       - name: Upload Windows Portable Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -81,10 +80,10 @@ jobs:
 
 
   # ========================================================
-  # 2. BUILD LINUX (Ubuntu / Debian .deb)
+  # 2. BUILD LINUX (Ubuntu Executable Portable + Debian .deb)
   # ========================================================
   build-linux:
-    name: Build Linux Package (.deb)
+    name: Build Linux Packages
     runs-on: ubuntu-latest
 
     steps:
@@ -98,7 +97,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Install jpackage dependencies (fakeroot, dpkg-dev)
+      - name: Install jpackage dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y fakeroot dpkg-dev
@@ -111,7 +110,24 @@ jobs:
           mkdir jpackage-input
           cp target/*.jar jpackage-input/shift-manager.jar
 
-      # --- Generazione pacchetto .deb ---
+      # --- A. Linux PORTABLE (Eseguibile diretto per Ubuntu) ---
+      - name: Generate Portable Linux App (app-image)
+        run: |
+          jpackage \
+            --type app-image \
+            --name "ShiftManager" \
+            --app-version "1.0.0" \
+            --description "Applicazione desktop per la pianificazione automatica dei turni" \
+            --vendor "PatRed Planner" \
+            --input jpackage-input \
+            --main-jar shift-manager.jar \
+            --dest dist-linux-portable
+
+      - name: Compress Linux Portable App
+        run: |
+          tar -czvf dist-linux-portable/ShiftManager-Linux-Portable.tar.gz -C dist-linux-portable ShiftManager
+
+      # --- B. Linux DEBIAN (.deb) ---
       - name: Generate Linux .deb Package
         run: |
           jpackage \
@@ -122,12 +138,17 @@ jobs:
             --vendor "PatRed Planner" \
             --input jpackage-input \
             --main-jar shift-manager.jar \
-            --dest dist-linux \
+            --dest dist-linux-deb \
             --linux-shortcut
 
-      # --- Upload Artifact Linux ---
-      - name: Upload Linux Debian/Ubuntu Package Artifact
+      - name: Upload Linux Portable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShiftManager-Linux-Portable
+          path: dist-linux-portable/ShiftManager-Linux-Portable.tar.gz
+
+      - name: Upload Linux Debian Package Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ShiftManager-Linux-Debian
-          path: dist-linux/*.deb
+          path: dist-linux-deb/*.deb
