@@ -35,10 +35,16 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>📅 Generazione Automatica Turni</h2>
-        <div>
+        <div class="d-flex gap-2">
+            <!-- Pulsante Calcola -->
             <button id="solveBtn" class="btn btn-primary btn-lg" onclick="generateRoster()">
                 <span class="spinner-border spinner-border-sm me-2" role="status" id="loadingSpinner"></span>
                 🚀 Calcola Turni Ottimizzati
+            </button>
+
+            <!-- Pulsante Spegnimento Applicazione -->
+            <button id="shutdownBtn" class="btn btn-outline-danger btn-lg" onclick="shutdownServer()">
+                🛑 Spegni Applicazione
             </button>
         </div>
     </div>
@@ -129,6 +135,32 @@
         } finally {
             solveBtn.disabled = false;
             spinner.style.display = 'none';
+        }
+    }
+
+    async function shutdownServer() {
+        if (!confirm("Sei sicuro di voler chiudere l'applicazione?")) {
+            return;
+        }
+
+        try {
+            await fetch('/api/system/shutdown', {method: 'POST'});
+
+            // Messaggio di conferma a schermo intero
+            document.body.innerHTML = `
+            <div class="container text-center py-5">
+                <h1 class="text-success mb-3">👋 Applicazione Chiusa</h1>
+                <p class="lead">Il server locale è stato arrestato con successo. Puoi chiudere questa scheda del browser.</p>
+            </div>
+        `;
+        } catch (error) {
+            // Se la richiesta va in timeout perché il server si è già spento
+            document.body.innerHTML = `
+            <div class="container text-center py-5">
+                <h1 class="text-success mb-3">👋 Applicazione Chiusa</h1>
+                <p class="lead">Il server locale è stato arrestato. Puoi chiudere questa scheda del browser.</p>
+            </div>
+        `;
         }
     }
 </script>
