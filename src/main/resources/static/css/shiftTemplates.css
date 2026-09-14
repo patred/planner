@@ -1,36 +1,163 @@
-.form-row-2 {
-    display: flex;
-    gap: 16px;
-}
-.form-row-2 .form-group {
-    flex: 1;
-}
+/* ==========================================================================
+   STILI PER LA MODALE (OVERLAY E CENTRAMENTO)
+   ========================================================================== */
 
-.requirements-section {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #e2e8f0;
-}
+.modal {
+    display: none; /* Nascosta di default */
+    position: fixed; /* Fissa rispetto al browser */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.65); /* Overlay scuro */
+    backdrop-filter: blur(4px); /* Effetto sfocatura moderno */
 
-.requirements-section h4 {
-    font-size: 0.95rem;
-    margin-bottom: 10px;
-    color: #475569;
-}
-
-.role-req-item {
-    display: flex;
-    justify-content: space-between;
+    /* Centramento perfetto orizzontale e verticale */
+    justify-content: center;
     align-items: center;
-    margin-bottom: 8px;
+
+    z-index: 9999;
+    padding: 1.5rem;
+    box-sizing: border-box;
 }
 
-.req-badge {
-    display: inline-block;
-    background-color: #f1f5f9;
+/* Attivazione via JavaScript */
+.modal.show {
+    display: flex !important;
+}
+
+/* ==========================================================================
+   STILI SPECIFICI PER SHIFTTEMPLATES.HTML (TEMPLATE TURNI)
+   ========================================================================== */
+
+/* Layout Form e Righe */
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+/* Grid di Checkbox per i Giorni */
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    background-color: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    cursor: pointer;
+}
+
+.checkbox-label.highlight {
+    font-weight: 600;
+    color: #4338ca;
+}
+
+/* Contenitore Fabbisogno Ruoli */
+.requirements-container {
+    background: #f1f5f9;
+    padding: 12px;
+    border-radius: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.requirement-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
     border: 1px solid #cbd5e1;
+}
+
+.requirement-row span {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.requirement-row input[type="number"] {
+    width: 70px;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Badge e Tag nella Tabella */
+.badge-acronym {
+    background-color: #0284c7;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.day-tag {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #e2e8f0;
+    color: #475569;
+    margin-right: 4px;
+    display: inline-block;
+}
+
+.day-tag.active {
+    background-color: #dcfce7;
+    color: #15803d;
+    font-weight: 600;
+}
+
+.night-tag {
+    background-color: #fef3c7;
+    color: #b45309;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.req-pill {
+    background-color: #e0e7ff;
+    color: #3730a3;
     padding: 2px 8px;
     border-radius: 12px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     margin-right: 4px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+/* Modale con larghezza leggermente maggiore per la form articolata */
+.modal-content {
+    max-width: 650px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    box-sizing: border-box;
 }

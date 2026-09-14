@@ -1,10 +1,14 @@
 package com.patred.planner.domain;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.patred.planner.config.RoleKeyDeserializer;
+import com.patred.planner.config.RoleKeySerializer;
 import jakarta.persistence.*;
 
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "shift_templates")
@@ -28,13 +32,18 @@ public class ShiftTemplate {
     private boolean onHolidays = false;  // Festivi infrasettimanali
     private boolean nightShift = false;  // Turno notturno
 
-    // Fabbisogno di personale per Ruolo
+    // Fabbisogno per Ruolo
     // Esempio: { MEDICO: 1, INFERMIERE: 2 }
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "shift_template_requirements", joinColumns = @JoinColumn(name = "shift_template_id"))
     @MapKeyJoinColumn(name = "role_code")
     @Column(name = "required_count")
-    private Map<Role, Integer> requiredStaff = new HashMap<>();
+    @JsonSerialize(keyUsing = RoleKeySerializer.class)
+    @JsonDeserialize(keyUsing = RoleKeyDeserializer.class)
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "shift_template_id")
+    private List<ShiftRequirement> staffRequirements = new ArrayList<>();
 
     public ShiftTemplate() {
     }
@@ -128,11 +137,11 @@ public class ShiftTemplate {
         this.nightShift = nightShift;
     }
 
-    public Map<Role, Integer> getRequiredStaff() {
-        return requiredStaff;
+    public List<ShiftRequirement> getStaffRequirements() {
+        return staffRequirements;
     }
 
-    public void setRequiredStaff(Map<Role, Integer> requiredStaff) {
-        this.requiredStaff = requiredStaff;
+    public void setStaffRequirements(List<ShiftRequirement> staffRequirements) {
+        this.staffRequirements = staffRequirements;
     }
 }

@@ -54,10 +54,25 @@ public class ShiftTemplateController {
         return shiftTemplateRepository.findById(id)
                 .map(existingTemplate -> {
                     existingTemplate.setName(updatedTemplate.getName());
+                    existingTemplate.setShortName(updatedTemplate.getShortName());
+                    existingTemplate.setAcronym(updatedTemplate.getAcronym());
                     existingTemplate.setStartTime(updatedTemplate.getStartTime());
                     existingTemplate.setEndTime(updatedTemplate.getEndTime());
-                    existingTemplate.setRequiredStaff(updatedTemplate.getRequiredStaff());
-                    // Aggiorna eventuali altri campi come i giorni della settimana attivi
+
+                    existingTemplate.setOnWeekdays(updatedTemplate.isOnWeekdays());
+                    existingTemplate.setOnSaturday(updatedTemplate.isOnSaturday());
+                    existingTemplate.setOnSunday(updatedTemplate.isOnSunday());
+                    existingTemplate.setOnHolidays(updatedTemplate.isOnHolidays());
+                    existingTemplate.setNightShift(updatedTemplate.isNightShift());
+
+                    // Aggiornamento pulito della lista di fabbisogni
+                    existingTemplate.getStaffRequirements().clear();
+                    if (updatedTemplate.getStaffRequirements() != null) {
+                        existingTemplate.getStaffRequirements().forEach(req -> {
+                            existingTemplate.getStaffRequirements().add(req);
+                        });
+                    }
+
                     ShiftTemplate saved = shiftTemplateRepository.save(existingTemplate);
                     return ResponseEntity.ok(saved);
                 })

@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Template Turni - Roster Planner</title>
+    <!-- Stili Condivisi e Specifici -->
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/shiftTemplates.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
 <div class="app-container">
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
@@ -29,10 +31,10 @@
         </nav>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="main-content">
         <header class="page-header">
-            <h1>Configurazione Modelli Turno</h1>
+            <h1>Template Turni</h1>
             <button class="btn btn-primary" onclick="openModal()">
                 <i class="fa-solid fa-plus"></i> Nuovo Template
             </button>
@@ -42,49 +44,92 @@
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Nome Turno</th>
-                    <th>Orario Inizio</th>
-                    <th>Orario Fine</th>
-                    <th>Fabbisogno Ruoli (Map)</th>
+                    <th>Sigla / Nome</th>
+                    <th>Orario</th>
+                    <th>Applicabilità Giorni</th>
+                    <th>Fabbisogno</th>
                     <th>Azioni</th>
                 </tr>
                 </thead>
                 <tbody id="templates-table-body">
-                <!-- Popolato via JS -->
+                <!-- Popolato via Javascript -->
                 </tbody>
             </table>
         </div>
     </main>
 </div>
 
-<!-- Modale Inserimento Template -->
-<div id="template-modal" class="modal-backdrop">
-    <div class="modal-content">
+<!-- Modal Form Template Turno -->
+<div id="template-modal" class="modal">
+    <div class="modal-content card">
         <div class="modal-header">
-            <h3>Crea Nuovo Template</h3>
-            <button class="btn-close" onclick="closeModal()">&times;</button>
+            <h2 id="modal-title">Nuovo Template Turno</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <form id="template-form" onsubmit="saveTemplate(event)">
-            <div class="form-group">
-                <label for="tpl-name">Nome Turno</label>
-                <input type="text" id="tpl-name" class="form-control" placeholder="es. Mattina, Notte" required>
-            </div>
-            <div class="form-row-2">
-                <div class="form-group">
-                    <label for="tpl-start">Orario Inizio</label>
-                    <input type="time" id="tpl-start" class="form-control" required>
+            <input type="hidden" id="template-id">
+
+            <div class="form-row">
+                <div class="form-group flex-2">
+                    <label for="tpl-name">Nome Completo:</label>
+                    <input type="text" id="tpl-name" class="form-control" placeholder="es. Notte Reparto" required>
                 </div>
-                <div class="form-group">
-                    <label for="tpl-end">Orario Fine</label>
-                    <input type="time" id="tpl-end" class="form-control" required>
+                <div class="form-group flex-1">
+                    <label for="tpl-shortName">Nome Breve:</label>
+                    <input type="text" id="tpl-shortName" class="form-control" placeholder="es. Notte">
+                </div>
+                <div class="form-group flex-1">
+                    <label for="tpl-acronym">Acronimo:</label>
+                    <input type="text" id="tpl-acronym" class="form-control" placeholder="es. N" required>
                 </div>
             </div>
 
-            <div class="requirements-section">
-                <h4>Fabbisogno Personale per Ruolo</h4>
-                <div id="role-requirements-list">
-                    <!-- Generato dinamicamente con gli input per ogni Ruolo nel DB -->
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label for="tpl-startTime">Ora Inizio:</label>
+                    <input type="time" id="tpl-startTime" class="form-control" required>
+                </div>
+                <div class="form-group flex-1">
+                    <label for="tpl-endTime">Ora Fine:</label>
+                    <input type="time" id="tpl-endTime" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Checkboxes per i Giorni e Notturno -->
+            <div class="form-group">
+                <label>Applicazione e Tipologia:</label>
+                <div class="checkbox-grid">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="tpl-onWeekdays" checked> Feriali (Lun-Ven)
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="tpl-onSaturday"> Sabato
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="tpl-onSunday"> Domenica
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="tpl-onHolidays"> Festivi
+                    </label>
+                    <label class="checkbox-label highlight">
+                        <input type="checkbox" id="tpl-nightShift"> Turno Notturno
+                    </label>
+                </div>
+            </div>
+
+            <!-- Sezione Fabbisogno Personale (Dinamica) -->
+            <div class="form-group" style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #334155; margin: 0;">
+                        Fabbisogno Personale (Regole Gruppo Ruoli)
+                    </label>
+                    <button type="button" class="btn btn-secondary" id="btn-add-requirement-rule" style="padding: 4px 10px; font-size: 0.8rem;">
+                        + Aggiungi Regola
+                    </button>
+                </div>
+
+                <div id="requirements-rules-container" style="display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Le regole di fabbisogno verranno inserite qui dinamicamente -->
                 </div>
             </div>
 
