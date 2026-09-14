@@ -4,13 +4,16 @@ const ROLES_URL = '/api/roles';
 let loadedRoles = [];
 let loadedTemplates = [];
 
+// Lista temporanea per le regole correntemente in fase di inserimento/modifica nella modale
+let currentRequirements = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Carichiamo prima i ruoli, poi i template
     await loadRoles();
     await loadTemplates();
 });
 
-// 1. Carica i ruoli
+// 1. Carica la lista dei ruoli disponibili
 async function loadRoles() {
     try {
         const res = await fetch(ROLES_URL);
@@ -22,9 +25,9 @@ async function loadRoles() {
     }
 }
 
-// Genera dinamicamente gli input del fabbisogno per ruolo
-function renderRequirementsForm(requirementsMap = {}) {
-    const container = document.getElementById('roles-requirements-container');
+// 2. Renderizza le regole di fabbisogno all'interno del form della modale
+function renderRequirementsRules() {
+    const container = document.getElementById('requirements-rules-container');
     if (!container) return;
 
     if (!loadedRoles || loadedRoles.length === 0) {
@@ -32,37 +35,84 @@ function renderRequirementsForm(requirementsMap = {}) {
         return;
     }
 
-    container.innerHTML = loadedRoles.map(role => {
-        const roleCode = role.code;
-        const roleName = role.description;
+    if (currentRequirements.length === 0) {
+        container.innerHTML = `<p style="font-size:0.85rem; color:#94a3b8; font-style:italic; margin: 5px 0;">Nessuna regola definita. Clicca su "+ Aggiungi Regola".</p>`;
+        return;
+    }
 
-        // Recupera il valore se presente nella mappa restituita da Spring Boot
-        let count = 0;
-        if (requirementsMap && typeof requirementsMap === 'object') {
-            // Cerca sia per codice esatto sia controllando se la chiave corrisponde
-            Object.keys(requirementsMap).forEach(key => {
-                if (key === roleCode || key === role.description) {
-                    count = requirementsMap[key];
-                }
-            });
-        }
+    container.innerHTML = currentRequirements.map((req, index) => {
+        // Estrae la lista dei codici dei ruoli già selezionati per questa regola
+        const selectedRoleCodes = (req.acceptableRoles || []).map(r => typeof r === 'string' ? r : r.code);
+
+        const rolesCheckboxesHtml = loadedRoles.map(role => {
+            const isChecked = selectedRoleCodes.includes(role.code) ? 'checked' : '';
+            return `
+                <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; background: #ffffff; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" class="req-role-checkbox" data-rule-index="${index}" value="${role.code}" ${isChecked}>
+                    ${role.description || role.code}
+                </label>
+            `;
+        }).join('');
 
         return `
-            <div class="requirement-row">
-                <span>${roleName}</span>
-                <input type="number" 
-                       id="req-role-${roleCode}" 
-                       data-role-key="${roleCode}" 
-                       class="role-req-input" 
-                       min="0" 
-                       value="${count}" 
-                       placeholder="0">
+            <div class="requirement-rule-card" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #334155;">Persone necessarie:</span>
+                        <input type="number" min="1" value="${req.count || 1}" 
+                               onchange="currentRequirements[${index}].count = parseInt(this.value) || 1" 
+                               style="width: 60px; padding: 3px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: 600; text-align: center;">
+                    </div>
+                    <button type="button" onclick="removeRequirementRule(${index})" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:0.85rem;">
+                        <i class="fa-solid fa-xmark"></i> Rimuovi
+                    </button>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;">Ruoli ammissibili in alternativa:</span>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${rolesCheckboxesHtml}
+                    </div>
+                </div>
             </div>
         `;
     }).join('');
+
+    // Listener sui checkbox dei ruoli per aggiornare la struttura JS in tempo reale
+    document.querySelectorAll('.req-role-checkbox').forEach(chk => {
+        chk.addEventListener('change', (e) => {
+            const ruleIdx = parseInt(e.target.getAttribute('data-rule-index'));
+            const roleCode = e.target.value;
+
+            if (!currentRequirements[ruleIdx].acceptableRoles) {
+                currentRequirements[ruleIdx].acceptableRoles = [];
+            }
+
+            if (e.target.checked) {
+                currentRequirements[ruleIdx].acceptableRoles.push({ code: roleCode });
+            } else {
+                currentRequirements[ruleIdx].acceptableRoles = currentRequirements[ruleIdx].acceptableRoles.filter(
+                    r => (typeof r === 'string' ? r : r.code) !== roleCode
+                );
+            }
+        });
+    });
 }
 
-// 2. Carica la lista dei Template
+// Aggiunge una nuova regola di fabbisogno vuota
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-add-requirement-rule') {
+        currentRequirements.push({ count: 1, acceptableRoles: [] });
+        renderRequirementsRules();
+    }
+});
+
+// Rimuove una regola di fabbisogno specificata
+window.removeRequirementRule = function(index) {
+    currentRequirements.splice(index, 1);
+    renderRequirementsRules();
+};
+
+// 3. Carica e mostra la lista dei Template nella tabella
 async function loadTemplates() {
     try {
         const res = await fetch(API_URL);
@@ -86,27 +136,31 @@ async function loadTemplates() {
                 ${tpl.nightShift ? '<span class="night-tag"><i class="fa-solid fa-moon"></i> Notte</span>' : ''}
             `;
 
+            // Formattazione pulita delle regole di fabbisogno (es. 2x [Medico o Biologo])
             let reqHtml = '';
-            if (tpl.requiredStaff && Object.keys(tpl.requiredStaff).length > 0) {
-                Object.entries(tpl.requiredStaff).forEach(([roleObj, count]) => {
-                    if (count > 0) {
-                        let rName = roleObj;
-                        const foundRole = loadedRoles.find(r => r.code === roleObj || String(r.id) === roleObj);
-                        if (foundRole) rName = foundRole.name;
+            if (tpl.staffRequirements && tpl.staffRequirements.length > 0) {
+                reqHtml = tpl.staffRequirements.map(req => {
+                    const rolesList = (req.acceptableRoles || []).map(r => {
+                        const code = typeof r === 'string' ? r : r.code;
+                        const found = loadedRoles.find(lr => lr.code === code);
+                        return found ? (found.description || found.code) : code;
+                    }).join(' / ');
 
-                        reqHtml += `<span class="req-pill">${rName}: <b>${count}</b></span>`;
-                    }
-                });
+                    return `<div class="req-pill" style="display:block; margin-bottom:4px;">
+                                <b>${req.count}x</b> [${rolesList || 'Nessun ruolo selezionato'}]
+                            </div>`;
+                }).join('');
+            } else {
+                reqHtml = '<span style="color:#94a3b8; font-size:0.85rem;">Nessuno</span>';
             }
-            if (!reqHtml) reqHtml = '<span style="color:#94a3b8; font-size:0.85rem;">Nessuno</span>';
 
             return `
                 <tr>
                     <td>
-                        <span class="badge-acronym">${tpl.acronym}</span>
-                        <b>${tpl.name}</b> ${tpl.shortName ? `(${tpl.shortName})` : ''}
+                        <span class="badge-acronym">${tpl.acronym || ''}</span>
+                        <b>${tpl.name || ''}</b> ${tpl.shortName ? `(${tpl.shortName})` : ''}
                     </td>
-                    <td><b>${tpl.startTime || ''} - ${tpl.endTime || ''}</b></td>
+                    <td><b>${tpl.startTime ? tpl.startTime.substring(0, 5) : ''} - ${tpl.endTime ? tpl.endTime.substring(0, 5) : ''}</b></td>
                     <td>${daysHtml}</td>
                     <td>${reqHtml}</td>
                     <td>
@@ -126,9 +180,8 @@ async function loadTemplates() {
     }
 }
 
-// 3. Apertura e Chiusura Modale (Garantito il funzionamento)
+// 4. Apertura e Chiusura Modale
 async function openModal() {
-    // Se per qualsiasi motivo i ruoli non sono stati caricati all'inizio, li ricarica prima di aprire
     if (!loadedRoles || loadedRoles.length === 0) {
         await loadRoles();
     }
@@ -139,16 +192,15 @@ async function openModal() {
     if (form) form.reset();
     document.getElementById('template-id').value = '';
 
-    // Default: feriali selezionato
     const weekdaysChk = document.getElementById('tpl-onWeekdays');
     if (weekdaysChk) weekdaysChk.checked = true;
 
     document.getElementById('modal-title').innerText = 'Nuovo Template Turno';
 
-    // Popola gli input dei ruoli azzerati
-    renderRequirementsForm();
+    // Azzera le regole di fabbisogno per il nuovo inserimento
+    currentRequirements = [];
+    renderRequirementsRules();
 
-    // Mostra la modale
     if (modal) {
         modal.classList.add('show');
     } else {
@@ -161,7 +213,7 @@ function closeModal() {
     if (modal) modal.classList.remove('show');
 }
 
-// 4. Modifica Template
+// 5. Modifica Template
 function editTemplate(id) {
     const tpl = loadedTemplates.find(t => t.id === id);
     if (!tpl) return;
@@ -180,31 +232,19 @@ function editTemplate(id) {
     document.getElementById('tpl-onHolidays').checked = tpl.onHolidays || false;
     document.getElementById('tpl-nightShift').checked = tpl.nightShift || false;
 
-    renderRequirementsForm(tpl.requiredStaff || {});
+    // Clona le regole per non mutare direttamente quelle caricati in memoria prima del salvataggio
+    currentRequirements = tpl.staffRequirements ? JSON.parse(JSON.stringify(tpl.staffRequirements)) : [];
+    renderRequirementsRules();
 
     document.getElementById('modal-title').innerText = 'Modifica Template Turno';
     document.getElementById('template-modal').classList.add('show');
 }
 
-// 5. Salva Template (POST / PUT)
+// 6. Salva Template (POST / PUT)
 async function saveTemplate(event) {
     event.preventDefault();
 
     const id = document.getElementById('template-id').value;
-    const requiredStaff = {};
-    const reqInputs = document.querySelectorAll('.role-req-input');
-
-    reqInputs.forEach(input => {
-        const count = parseInt(input.value) || 0;
-        const roleKey = input.getAttribute('data-role-key');
-
-        if (count > 0 && roleKey) {
-            const roleObj = loadedRoles.find(r => (r.code === roleKey || String(r.id) === roleKey));
-            if (roleObj) {
-                requiredStaff[roleObj.code || roleObj.id] = count;
-            }
-        }
-    });
 
     const payload = {
         name: document.getElementById('tpl-name').value,
@@ -217,7 +257,7 @@ async function saveTemplate(event) {
         onSunday: document.getElementById('tpl-onSunday').checked,
         onHolidays: document.getElementById('tpl-onHolidays').checked,
         nightShift: document.getElementById('tpl-nightShift').checked,
-        requiredStaff: requiredStaff
+        staffRequirements: currentRequirements
     };
 
     const method = id ? 'PUT' : 'POST';
@@ -243,7 +283,7 @@ async function saveTemplate(event) {
     }
 }
 
-// 6. Elimina Template
+// 7. Elimina Template
 async function deleteTemplate(id) {
     if (confirm('Sei sicuro di voler eliminare questo template di turno?')) {
         try {

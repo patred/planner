@@ -24,10 +24,10 @@ public class Shift {
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
 
-    // Il ruolo specifico richiesto per QUESTO singolo posto
+    // Regola di fabbisogno collegata (contiene il set di ruoli compatibili)
     @ManyToOne(optional = false)
-    @JoinColumn(name = "required_role_code")
-    private Role requiredRole;
+    @JoinColumn(name = "shift_requirement_id")
+    private ShiftRequirement requirement;
 
     // Dipendente assegnato da Timefold a questo specifico posto
     @PlanningVariable
@@ -38,11 +38,11 @@ public class Shift {
     public Shift() {
     }
 
-    public Shift(ShiftTemplate template, LocalDateTime startDateTime, LocalDateTime endDateTime, Role requiredRole) {
+    public Shift(ShiftTemplate template, LocalDateTime startDateTime, LocalDateTime endDateTime, ShiftRequirement requirement) {
         this.template = template;
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
-        this.requiredRole = requiredRole;
+        this.requirement = requirement;
     }
 
     @PlanningId
@@ -83,12 +83,12 @@ public class Shift {
         this.endDateTime = endDateTime;
     }
 
-    public Role getRequiredRole() {
-        return requiredRole;
+    public ShiftRequirement getRequirement() {
+        return requirement;
     }
 
-    public void setRequiredRole(Role requiredRole) {
-        this.requiredRole = requiredRole;
+    public void setRequirement(ShiftRequirement requirement) {
+        this.requirement = requirement;
     }
 
     public Employee getEmployee() {

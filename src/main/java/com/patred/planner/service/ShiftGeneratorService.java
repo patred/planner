@@ -1,7 +1,7 @@
 package com.patred.planner.service;
 
-import com.patred.planner.domain.Role;
 import com.patred.planner.domain.Shift;
+import com.patred.planner.domain.ShiftRequirement;
 import com.patred.planner.domain.ShiftTemplate;
 import com.patred.planner.repository.ShiftRepository;
 import com.patred.planner.repository.ShiftTemplateRepository;
@@ -12,7 +12,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ShiftGeneratorService {
@@ -34,7 +33,7 @@ public class ShiftGeneratorService {
             boolean isWeekend = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
 
             for (ShiftTemplate t : templates) {
-                // Filtra in base ai giorni feriali / festivi / weekend
+                // Filtra in base ai giorni feriali / weekend
                 if ((day == DayOfWeek.SATURDAY && !t.isOnSaturday()) ||
                         (day == DayOfWeek.SUNDAY && !t.isOnSunday()) ||
                         (!isWeekend && !t.isOnWeekdays())) {
@@ -46,13 +45,16 @@ public class ShiftGeneratorService {
                         ? date.plusDays(1).atTime(t.getEndTime())
                         : date.atTime(t.getEndTime());
 
-                // Per ogni ruolo e relativo numero richiesto nel template, genera un'istanza Shift
-                for (Map.Entry<Role, Integer> entry : t.getRequiredStaff().entrySet()) {
-                    Role role = entry.getKey();
-                    int count = entry.getValue();
+                // Per ogni regola di fabbisogno nel template (es. 2x [Medico/Biologo])
+                for (ShiftRequirement req : t.getStaffRequirements()) {
+                    // Genera N istanze di Shift quanti sono i posti richiesti dalla regola
+                    for (int i = 0; i < req.getCount(); i++) {
+                        Shift shift = new Shift();
+                        shift.setTemplate(t);
+                        shift.setStartDateTime(start);
+                        shift.setEndDateTime(end);
+                        shift.setRequirement(req); // Collega la regola di fabbisogno
 
-                    for (int i = 0; i < count; i++) {
-                        Shift shift = new Shift(t, start, end, role);
                         shiftRepository.save(shift);
                     }
                 }

@@ -2,6 +2,7 @@ package com.patred.planner.solver;
 
 import ai.timefold.solver.core.api.score.buildin.hardsoft.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.*;
+import com.patred.planner.domain.Role;
 import com.patred.planner.domain.Shift;
 
 import java.time.Duration;
@@ -16,7 +17,7 @@ public class RosterConstraintProvider implements ConstraintProvider {
                 noOverlappingShifts(factory),
                 atLeast11HoursRestBetweenShifts(factory),
                 fairnessPerEmployee(factory),
-                requiredRoleForShift(factory)
+                requiredRoleMatch(factory)
         };
     }
 
@@ -55,13 +56,15 @@ public class RosterConstraintProvider implements ConstraintProvider {
                 .asConstraint("Distribuzione equa dei turni");
     }
 
-    private Constraint requiredRoleForShift(ConstraintFactory constraintFactory) {
+    public Constraint requiredRoleMatch(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Shift.class)
-                // Considera solo i turni a cui è già stato assegnato un dipendente
-                .filter(shift -> shift.getEmployee() != null
-                        // Penalizza se il ruolo del dipendente NON coincide con il ruolo richiesto
-                        && !shift.getEmployee().getRole().equals(shift.getRequiredRole()))
+                .filter(shift -> shift.getEmployee() != null)
+                .filter(shift -> {
+                    Role employeeRole = shift.getEmployee().getRole();
+                    // Penalizza se il ruolo del dipendente NON è presente tra i ruoli ammessi dal requisito
+                    return !shift.getRequirement().getAcceptableRoles().contains(employeeRole);
+                })
                 .penalize(HardSoftScore.ONE_HARD)
-                .asConstraint("Role mismatch for shift");
+                .asConstraint("Ruolo dipendente non compatibile col fabbisogno del turno");
     }
 }
